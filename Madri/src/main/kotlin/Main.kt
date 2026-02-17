@@ -1,6 +1,7 @@
 import java.io.PrintStream
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.Period
 import java.time.format.DateTimeFormatter
 
 //data class e enums
@@ -139,6 +140,85 @@ fun main() {
                             }
                         }
                         usuariosListaMutavel.add(novoUsuario); println("Cadastrado com sucesso!")
+                    }
+                }
+            }
+        } else {
+            //MENU LOGADO
+            println("\n--- MENU (${usuarioLogado.usuarioNome}) ---")
+            println("1. Perfil (US 4)\n2. Alterar Perfil (US 3)\n3. Inativar (US 5)\n0. Logout")
+
+            if (usuarioLogado.usuarioTipo == TipoUsuario.ORGANIZADOR) {
+                println("4. Criar Evento (US 6)\n5. Listar Meus Eventos (US 10)\n6. Alterar Evento (US 7)\n7. Ativar/Desativar (US 8/9)")
+            } else {
+                println("4. Feed (US 11)\n5. Comprar (US 12)\n6. Meus Ingressos (US 14)\n7. Cancelar Ingresso (US 13)")
+            }
+
+            print("Opção: ")
+            when (readln()) {
+                "0" -> usuarioLogado = null
+                "1" -> {
+                    //VISUALIZAR PERFIL
+                    val verificaIdadeAtualUsuario = Period.between(usuarioLogado.usuarioDataNascimento, LocalDate.now())
+                    println("Nome: ${usuarioLogado.usuarioNome} | Email: ${usuarioLogado.usuarioEmail}")
+                    println("Idade: ${verificaIdadeAtualUsuario.years} anos, ${verificaIdadeAtualUsuario.months} meses, ${verificaIdadeAtualUsuario.days} dias")
+                    usuarioLogado.usuarioCnpj?.let {
+                        println("Empresa: $it - ${usuarioLogado.usuarioNomeFantasia}")
+                    }
+                }
+
+                "2" -> {
+                    //ALTERAR PERFIL
+                    print("Deixe em branco para não alterar.")
+                    print("Novo nome: ")
+
+                    usuarioLogado.usuarioNome =
+                        readln().takeIf {
+                            it.isNotBlank()
+                        }?.let {
+                            usuarioLogado.usuarioNome = it
+                        }.toString()
+
+                    print("Nova senha: ")
+                    usuarioLogado.usuarioSenha = readln().takeIf {
+                        it.isNotBlank()
+                    }?.let {
+                        usuarioLogado.usuarioSenha = it
+                    }.toString()
+
+                    print("Novo sexo: ")
+                    usuarioLogado.usuarioSexo = readln().takeIf {
+                        it.isNotBlank()
+                    }?.let {
+                        usuarioLogado.usuarioSexo = it
+                    }.toString()
+
+                    print("Nova Data de Nascimento no formato (DD/MM/YYYY): ")
+                    usuarioLogado.usuarioDataNascimento = LocalDate.parse(readln(), formatarData)
+
+                    if (usuarioLogado.usuarioTipo == TipoUsuario.ORGANIZADOR) {
+                        print("Novo Nome Fantasia: "); readln().takeIf {
+                            it.isNotBlank()
+                        }?.let {
+                            usuarioLogado.usuarioNomeFantasia = it
+                        }
+                    }
+
+                    println("Dados atualizados!")
+                }
+
+                "3" -> {
+                    //INATIVAR
+                    val temEventoAtivo = eventosListaMutavel.any {
+                        it.eventoOrganizadorEmail == usuarioLogado.usuarioEmail && it.eventoAtivo && it.eventoDataFim.isAfter(
+                            LocalDateTime.now()
+                        )
+                    }
+                    if (usuarioLogado.usuarioTipo == TipoUsuario.ORGANIZADOR && temEventoAtivo) println("Erro: Você possui eventos ativos.")
+                    else {
+                        usuarioLogado.usuarioAtivo = false
+                        usuarioLogado = null
+                        println("Conta inativada.")
                     }
                 }
             }
