@@ -221,7 +221,129 @@ fun main() {
                         println("Conta inativada.")
                     }
                 }
+                "4" -> {
+                    if (usuarioLogado.usuarioTipo == TipoUsuario.ORGANIZADOR) {
+                        //CADASTRAR EVENTO
+                        print("Nome do Evento: ")
+                        val nomeEventoRespostaMenu = readln()
+
+                        print("Página do Evento: ")
+                        val paginaEventoRespostaMenu = readln()
+
+                        print("Descrição do Evento: ")
+                        val descricaoEventoRespostaMenu = readln()
+
+                        print("Início (dd/MM/yyyy HH:mm): ")
+                        val dataInicioEventoRespostaMenu = LocalDateTime.parse(readln(), formatarDataHora)
+
+                        print("Fim (dd/MM/yyyy HH:mm): ")
+                        val dataFimEventoRespostaMenu = LocalDateTime.parse(readln(), formatarDataHora)
+                        val duracaoEvento = Duration.between(dataInicioEventoRespostaMenu, dataFimEventoRespostaMenu).toMinutes()
+
+                        if (dataInicioEventoRespostaMenu.isBefore(LocalDateTime.now()) ) println("Erro: Data e hora de início não pode ser antes da data e hora de agora.")
+                        else if (dataFimEventoRespostaMenu.isBefore(dataInicioEventoRespostaMenu)) println("Erro: Data de fim não pode ser antes do data do início.")
+                        else if(duracaoEvento < 30) println("Erro: Duração mínima de 30 minutos.")
+                        else {
+                            print("Local (Digite o link ou endereço: ")
+                            var localEventoRespostaMenu = readln()
+
+                            print("Tipo do Evento: (SOCIAL - ACADEMICO - CORPORATIVO - SHOW - FESTIVAL - OUTROS)")
+                            val tipoEventoRespostaMenuEntrada = readln().trim()
+                            val tipoEventoRespostaMenu = TipoEvento.entries.find{
+                                it.name.equals(tipoEventoRespostaMenuEntrada, ignoreCase = true)
+                            }?: TipoEvento.OUTROS
+
+                            print("Digite a Modalidade do Evento: (PRESENCIAL - HIBRIDO - REMOTO)")
+                            val modalidadeEventoRespostaMenuEntrada = readln().trim()
+                            val modalidadeEventoRespostaMenu = TipoEvento.entries.find{
+                                it.name.equals(modalidadeEventoRespostaMenuEntrada, ignoreCase = true)
+                            }?: Modalidade.PRESENCIAL
+
+                            print("Preço do Ingresso: ")
+                            val precoIngressoEventoRespostaMenu = readln().toDouble()
+
+                            print("Capacidade do Evento: ")
+                            val capacidadeEventoRespostaMenu = readln().toInt()
+
+                            print("ID Evento Principal (0 para nenhum): ")
+                            val idEventoPrincipal = readln().toInt().let {
+                                if(it==0) null else it
+                            }
+                            eventosListaMutavel.add(Evento(
+                                eventosListaMutavel.size + 1,
+                                nomeEventoRespostaMenu,
+                                descricaoEventoRespostaMenu,
+                                paginaEventoRespostaMenu,
+                                dataInicioEventoRespostaMenu,
+                                dataFimEventoRespostaMenu,
+                                tipoEventoRespostaMenu,
+                                modalidadeEventoRespostaMenu,
+                                localEventoRespostaMenu,
+                                precoIngressoEventoRespostaMenu,
+                                capacidadeEventoRespostaMenu,
+                                0,
+                                false,
+                                usuarioLogado.usuarioEmail,
+                                idEventoPrincipal)
+                            )
+                            println("Evento criado (Inativo por padrão).")
+                        }
+                    } else {
+                        //FEED
+                        eventosListaMutavel.filter {
+                            it.eventoAtivo && it.eventoDataFim.isAfter(LocalDateTime.now()) && it.eventoIngressosVendidos < it.eventoCapacidadeMax
+                        }
+                            .sortedWith(compareBy(
+                                { it.eventoDataInicio }, { it.eventoNome }
+                            ))
+                            .forEach {
+                                println("${it.eventoId}: ${it.eventoNome} | ${it.eventoDataInicio.format(formatarDataHora)} | R$ ${it.eventoPreco}")
+                            }
+                    }
+                }
+                "5" -> {
+                    if (usuarioLogado.usuarioTipo == TipoUsuario.ORGANIZADOR) {
+                        //LISTAR DO ORG
+                        eventosListaMutavel.filter {
+                            it.eventoOrganizadorEmail == usuarioLogado!!.usuarioEmail
+                        }.forEach {
+                            println("${it.eventoId}: ${it.eventoNome} [${if(it.eventoAtivo) "ATIVO" else "INATIVO"}]")
+                        }
+                    } else {
+                        //COMPRAR INGRESSO [Se não for do tipo organizador]
+                        print("ID Evento: ")
+                        val idEvento = readln().toInt()
+                        val eventoEncontrado = eventosListaMutavel.find {  //procura evento pelo id e ativo
+                            it.eventoId == idEvento && it.eventoAtivo
+                        }
+                        if (eventoEncontrado != null && eventoEncontrado.eventoIngressosVendidos < eventoEncontrado.eventoCapacidadeMax) {
+                            val eventoPrincipal = eventosListaMutavel.find {
+                                it.eventoId == eventoEncontrado.eventoIdEventoPrincipal
+                            }
+                            if (eventoPrincipal != null) {
+                                ingressosListaMutavel.add(Ingresso(
+                                    ingressosListaMutavel.size+1,
+                                    eventoPrincipal.eventoId,
+                                    usuarioLogado.usuarioEmail,
+                                    "ATIVO",
+                                    eventoPrincipal.eventoPreco
+                                ))
+                                eventoPrincipal.eventoIngressosVendidos++
+                            }
+                            ingressosListaMutavel.add(Ingresso(
+                                ingressosListaMutavel.size+1,
+                                eventoEncontrado.eventoId,
+                                usuarioLogado.usuarioEmail,
+                                "ATIVO",
+                                eventoEncontrado.eventoPreco
+                            ))
+                            eventoEncontrado.eventoIngressosVendidos++
+                            println("Compra realizada!")}
+
+                    }
+                }
             }
         }
     }
 }
+
