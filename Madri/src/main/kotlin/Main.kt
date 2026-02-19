@@ -74,7 +74,7 @@ fun main() {
     while (menuContinuaAberto) {
         if (usuarioLogado == null) {
             println("\n--- DENDÊ EVENTOS ---")
-            println("1. Login / Reativar (US 6)\n2. Cadastro Comum (US 1)\n3. Cadastro Org (US 2)\n0. Sair") //US = User History
+            println("1. Login / Reativar \n2. Cadastro Comum \n3. Cadastro Org \n0. Sair") //US = User History
             print("Opção: ")
             val opcoesMenu = readln()
             if (opcoesMenu == "0") menuContinuaAberto = false
@@ -146,12 +146,12 @@ fun main() {
         } else {
             //MENU LOGADO
             println("\n--- MENU (${usuarioLogado.usuarioNome}) ---")
-            println("1. Perfil (US 4)\n2. Alterar Perfil (US 3)\n3. Inativar (US 5)\n0. Logout")
+            println("1. Perfil \n2. Alterar Perfil \n3. Inativar \n0. Logout")
 
             if (usuarioLogado.usuarioTipo == TipoUsuario.ORGANIZADOR) {
-                println("4. Criar Evento (US 6)\n5. Listar Meus Eventos (US 10)\n6. Alterar Evento (US 7)\n7. Ativar/Desativar (US 8/9)")
+                println("4. Criar Evento \n5. Listar Meus Eventos \n6. Alterar Evento \n7. Ativar/Desativar ")
             } else {
-                println("4. Feed (US 11)\n5. Comprar (US 12)\n6. Meus Ingressos (US 14)\n7. Cancelar Ingresso (US 13)")
+                println("4. Feed \n5. Comprar \n6. Meus Ingressos \n7. Cancelar Ingresso ")
             }
 
             print("Opção: ")
