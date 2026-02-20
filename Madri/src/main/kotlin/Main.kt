@@ -111,35 +111,53 @@ fun main() {
                         print("Digite seu Nome: ")
                         val nomeRespostaMenu = readln()
 
-                        print("Digite sua Data de Nascimento no formato (DD/MM/YYYY): ")
-                        val dataNascimentoRespostaMenu = LocalDate.parse(readln(), formatarData)
+                        print("Digite sua Data de Nascimento no formato (ddMMyyyy): ")
+                        val dataNascimentoRespostaMenu = readln() //TODO:se colocar 06102003 não vai
+                        var dataNascimentoFormatada: LocalDate? = null
 
-                        print("Digite seu Sexo: ")
-                        val sexoRespostaMenu = readln()
-
-                        print("Digite sua Senha: ")
-                        val senhaRespostaMenu = readln()
-
-                        val tipoRespostaMenu = if (opcoesMenu == "3") TipoUsuario.ORGANIZADOR else TipoUsuario.COMUM
-                        val novoUsuario = Usuario(
-                            emailRespostaMenu,
-                            nomeRespostaMenu,
-                            dataNascimentoRespostaMenu,
-                            sexoRespostaMenu,
-                            senhaRespostaMenu,
-                            tipoRespostaMenu)
-                        if (tipoRespostaMenu == TipoUsuario.ORGANIZADOR) {
-                            print("Informar empresa? (S/N): ")
-                            if(readln().uppercase() == "S") {
-                                print("CNPJ: ")
-                                novoUsuario.usuarioCnpj = readln()
-                                print("Razão Social: ")
-                                novoUsuario.usuarioRazaoSocial = readln()
-                                print("Nome Fantasia: ")
-                                novoUsuario.usuarioNomeFantasia = readln()
+                        if (dataNascimentoRespostaMenu.length == 8) {
+                            try {
+                                // Converte o texto "06102003" em um objeto de data real
+                                dataNascimentoFormatada =
+                                    LocalDate.parse(dataNascimentoRespostaMenu, DateTimeFormatter.ofPattern("ddMMyyyy"))
+                            } catch (e: Exception) {
+                                println("Erro: Data inválida.")
                             }
+                        } else {
+                            println("Erro: Use o formato de 8 dígitos (Ex: 06102003).")
                         }
-                        usuariosListaMutavel.add(novoUsuario); println("Cadastrado com sucesso!")
+
+                        if (dataNascimentoFormatada != null) {
+                            print("Digite seu Sexo: ")
+                            val sexoRespostaMenu = readln()
+
+                            print("Digite sua Senha: ")
+                            val senhaRespostaMenu = readln()
+
+                            val tipoRespostaMenu = if (opcoesMenu == "3") TipoUsuario.ORGANIZADOR else TipoUsuario.COMUM
+                            val novoUsuario = Usuario(
+                                emailRespostaMenu,
+                                nomeRespostaMenu,
+                                dataNascimentoFormatada,
+                                sexoRespostaMenu,
+                                senhaRespostaMenu,
+                                tipoRespostaMenu
+                            )
+                            if (tipoRespostaMenu == TipoUsuario.ORGANIZADOR) {
+                                print("Informar empresa? (S/N): ")
+                                if (readln().uppercase() == "S") {
+                                    print("CNPJ: ")
+                                    novoUsuario.usuarioCnpj = readln()
+                                    print("Razão Social: ")
+                                    novoUsuario.usuarioRazaoSocial = readln()
+                                    print("Nome Fantasia: ")
+                                    novoUsuario.usuarioNomeFantasia = readln()
+                                }
+                            }
+                            usuariosListaMutavel.add(novoUsuario); println("Cadastrado com sucesso!")
+                        }else{
+                            println("Cadastro cancelado por erro na data")
+                        }
                     }
                 }
             }
@@ -169,7 +187,7 @@ fun main() {
 
                 "2" -> {
                     //ALTERAR PERFIL
-                    print("Deixe em branco para não alterar.")
+                    println("Deixe em branco para não alterar.")
                     print("Novo nome: ")
 
                     usuarioLogado.usuarioNome =
