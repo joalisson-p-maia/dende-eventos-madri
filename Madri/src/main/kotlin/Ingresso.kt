@@ -71,7 +71,7 @@ fun cancelarIngresso(usuarioLogado: Usuario) {
     }
 
     val evento = encontrarEventoPorId(ingresso.ingressoEventoId)
-    ingresso.ingressoStatus = StatusIngresso.CANCELADO
+    ingresso.ingressoStatus = "CANCELADO"
     atualizarIngresso(ingresso.ingressoId, ingresso)
 
     if (evento != null && evento.eventoEstorna) {
@@ -88,7 +88,7 @@ fun listarIngressos(usuarioLogado: Usuario) {
         { ingresso ->
             val evento = encontrarEventoPorId(ingresso.ingressoEventoId)
             val finalizado = evento == null || !evento.eventoAtivo || evento.eventoDataFim.isBefore(agora)
-            if (ingresso.ingressoStatus == StatusIngresso.CANCELADO || finalizado) 1 else 0
+            if ("CANCELADO".equals(ingresso.ingressoStatus) || finalizado) 1 else 0
         },
         { ingresso ->
             encontrarEventoPorId(ingresso.ingressoEventoId)?.eventoDataInicio ?: LocalDateTime.MAX
@@ -105,9 +105,10 @@ fun listarIngressos(usuarioLogado: Usuario) {
 
     val items = meusIngressos.map { ingresso ->
         val evento = encontrarEventoPorId(ingresso.ingressoEventoId)
+        val statusIngresso = if ("CANCELADO".equals(ingresso.ingressoStatus)) "CANCELADO" else "ATIVO"
         val nomeEvento = evento?.eventoNome ?: "Evento removido"
         val dataEvento = evento?.eventoDataInicio?.format(formatarDataHora) ?: "-"
-        "[Ingresso #${ingresso.ingressoId}] $nomeEvento | Início: $dataEvento | Pago: R${"%.2f".format(ingresso.ingressoValorPago)} | Status: ${ingresso.ingressoStatus}"
+        "[Ingresso #${ingresso.ingressoId}] $nomeEvento | Início: $dataEvento | Pago: R${"%.2f".format(ingresso.ingressoValorPago)} | Status: $statusIngresso"
     }
     printTable("\n--- MEUS INGRESSOS ---", items)
 }
