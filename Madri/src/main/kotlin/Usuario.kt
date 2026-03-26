@@ -3,7 +3,7 @@ import java.time.Period
 import java.time.format.DateTimeFormatter
 
 fun cadastrarUsuarioComum() {
-    val email = readString("Digite seu Email: ", "Email inválido.")
+    val email = readString("Digite seu Email: ", "Email inválido.",1)
     if (encontrarUsuarioPorEmail(email) != null) {
         println("Erro: Email já cadastrado.")
         return
@@ -17,8 +17,20 @@ fun cadastrarUsuarioComum() {
         println("Erro: Data inválida.")
         return
     }
-    val sexo = readString("Digite seu Sexo: ", "Sexo inválido.", 1)
-    val senha = readString("Digite sua Senha: ", "Senha inválida.", 1)
+
+    println("Escolha o Sexo: 1 - MASCULINO, 2 - FEMININO, 3 - OUTROS")
+    val opcaoSexo = readInt("Opção: ", "Opção inválida.")
+    val sexo = when(opcaoSexo) {
+        1 -> SEXO.MASCULINO
+        2 -> SEXO.FEMININO
+        else -> SEXO.OUTROS
+    }
+
+    var senha = ""
+    while (senha.length !in 8..32) {
+        senha = readString("Digite sua Senha (8 a 32 caracteres): ", "Senha inválida.")
+        if (senha.length !in 8..32) println("Erro: A senha deve ter entre 8 e 32 dígitos.")
+    }
 
     val novoUsuario = Usuario(
         usuarioEmail = email,
@@ -47,8 +59,26 @@ fun cadastrarUsuarioOrganizador() {
         println("Erro: Data inválida.")
         return
     }
-    val sexo = readString("Digite seu Sexo: ", "Sexo inválido.", 1)
-    val senha = readString("Digite sua Senha: ", "Senha inválida.", 1)
+
+    val idade = Period.between(dataNascimento, LocalDate.now()).years
+    if (idade < 18) {
+        println("Você precisa ter 18 anos ou mais para se cadastrar.")
+        return
+    }
+
+    println("Escolha o Sexo: 1 - MASCULINO, 2 - FEMININO, 3 - OUTROS")
+    val opcaoSexo = readInt("Opção: ", "Opção inválida.")
+    val sexo = when(opcaoSexo) {
+        1 -> SEXO.MASCULINO
+        2 -> SEXO.FEMININO
+        else -> SEXO.OUTROS
+    }
+
+    var senha = ""
+    while (senha.length !in 8..32) {
+        senha = readString("Digite sua Senha (8 a 32 caracteres): ", "Senha inválida.")
+        if (senha.length !in 8..32) println("Erro: A senha deve ter entre 8 e 32 dígitos.")
+    }
 
     val novoUsuario = Usuario(
         usuarioEmail = email,
@@ -74,12 +104,34 @@ fun alterarPerfilUsuario(usuarioLogado: Usuario) {
     println("Deixe em branco para não alterar.")
 
     readString("Novo nome (atual: ${usuarioLogado.usuarioNome}): ", "").takeIf { it.isNotBlank() }?.let { usuarioLogado.usuarioNome = it }
-    readString("Nova senha: ", "").takeIf { it.isNotBlank() }?.let { usuarioLogado.usuarioSenha = it }
-    readString("Novo sexo (atual: ${usuarioLogado.usuarioSexo}): ", "").takeIf { it.isNotBlank() }?.let { usuarioLogado.usuarioSexo = it }
 
-    readString("Nova Data de Nascimento no formato (DD/MM/YYYY) (atual: ${usuarioLogado.usuarioDataNascimento.format(formatarData)}): ", "").takeIf { it.isNotBlank() }?.let {
+    val novaSenha = readString("Nova senha (8-32 caracteres): ", "")
+    if (novaSenha.isNotBlank()) {
+        if (novaSenha.length in 8..32) {
+            usuarioLogado.usuarioSenha = novaSenha
+        } else {
+            println("Erro: Senha não alterada (deve ter entre 8 e 32 dígitos).")
+        }
+    }
+
+    println("Novo sexo (atual: ${usuarioLogado.usuarioSexo}): 1-MASCULINO, 2-FEMININO, 3-OUTROS (ou 0 para manter)")
+    when (readInt("Opção: ", "Opção inválida.")) {
+        1 -> usuarioLogado.usuarioSexo = SEXO.MASCULINO
+        2 -> usuarioLogado.usuarioSexo = SEXO.FEMININO
+        3 -> usuarioLogado.usuarioSexo = SEXO.OUTROS
+    }
+
+    readString("Nova Data de Nascimento no formato (DD/MM/YYYY) (atual: ${usuarioLogado.usuarioDataNascimento.format(formatarData)}): ", "").takeIf { it.isNotBlank() }?.let { dataEntrada ->
         try {
-            usuarioLogado.usuarioDataNascimento = LocalDate.parse(it, formatarData)
+            val novaData = LocalDate.parse(dataEntrada, formatarData)
+            val idade = Period.between(novaData, LocalDate.now()).years
+
+            if (idade < 18) {
+                println("Erro: Alteração negada. O usuário deve ter 18 anos ou mais.")
+            } else {
+                usuarioLogado.usuarioDataNascimento = novaData
+                println("Data de nascimento atualizada com sucesso!")
+            }
         } catch (e: Exception) {
             println("Erro: Data inválida. Mantida a data anterior.")
         }
@@ -87,6 +139,7 @@ fun alterarPerfilUsuario(usuarioLogado: Usuario) {
 
     if (usuarioLogado.usuarioTipo == TipoUsuario.ORGANIZADOR) {
         readString("Novo Nome Fantasia (atual: ${usuarioLogado.usuarioNomeFantasia ?: "não informado"}): ", "").takeIf { it.isNotBlank() }?.let { usuarioLogado.usuarioNomeFantasia = it }
+        readString("Nova Razao Social (atual: ${usuarioLogado.usuarioRazaoSocial ?: "não informado"}): ", "").takeIf { it.isNotBlank() }?.let { usuarioLogado.usuarioRazaoSocial = it }
     }
 
     atualizarUsuario(usuarioLogado.usuarioEmail, usuarioLogado)

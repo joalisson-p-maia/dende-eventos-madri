@@ -1,39 +1,33 @@
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 fun cadastrarEvento(usuarioLogado: Usuario) {
     val pagina = readString("Página do evento: ", "Página inválida.", 1)
     val nome = readString("Nome do evento: ", "Nome inválido.", 1)
     val descricao = readString("Descrição: ", "Descrição inválida.", 1)
 
-    val dataInicioStr = readString("Data e hora de início (DD/MM/YYYY HH:mm): ", "Data inválida.")
+    val dataInicioStr = readString("Data e hora de início (DD/MM/YYYY HH:mm): ", "Data inválida.", 1)
     val dataInicio = try {
         LocalDateTime.parse(dataInicioStr, formatarDataHora)
     } catch (e: Exception) {
-        println("Erro: Data de início inválida.")
+        println("Erro: Formato de data de início inválido.")
         return
     }
 
     if (dataInicio.isBefore(LocalDateTime.now())) {
-        println("Erro: A data de início não pode ser anterior à data atual.")
+        println("Erro: A data de início não pode ser no passado.")
         return
     }
 
-    val dataFimStr = readString("Data e hora de fim (DD/MM/YYYY HH:mm): ", "Data inválida.")
+    val dataFimStr = readString("Data e hora de fim (DD/MM/YYYY HH:mm): ", "Data inválida.", 1)
     val dataFim = try {
         LocalDateTime.parse(dataFimStr, formatarDataHora)
     } catch (e: Exception) {
-        println("Erro: Data de fim inválida.")
-        return
-    }
-
-    if (dataFim.isBefore(LocalDateTime.now())) {
-        println("Erro: A data de fim não pode ser anterior à data atual.")
+        println("Erro: Formato de data de fim inválido.")
         return
     }
 
     if (dataFim.isBefore(dataInicio)) {
-        println("Erro: A data de fim não pode ser anterior à data de início.")
+        println("Erro: A data de término deve ser após a data de início.")
         return
     }
 
@@ -43,9 +37,8 @@ fun cadastrarEvento(usuarioLogado: Usuario) {
     }
 
     println("Tipos de evento disponíveis: ${TipoEvento.entries.joinToString()}")
-    val tipoStr = readString("Tipo do evento: ", "Tipo inválido.")
     val tipo = try {
-        TipoEvento.valueOf(tipoStr.uppercase())
+        TipoEvento.valueOf(readString("Tipo do evento: ", "Tipo inválido.", 1).uppercase())
     } catch (e: Exception) {
         println("Erro: Tipo inválido.")
         return
@@ -59,19 +52,19 @@ fun cadastrarEvento(usuarioLogado: Usuario) {
     }
 
     println("Modalidades: ${Modalidade.entries.joinToString()}")
-    val modalidadeStr = readString("Modalidade: ", "Modalidade inválida.")
     val modalidade = try {
-        Modalidade.valueOf(modalidadeStr.uppercase())
+        Modalidade.valueOf(readString("Modalidade: ", "Modalidade inválida.", 1).uppercase())
     } catch (e: Exception) {
         println("Erro: Modalidade inválida.")
         return
     }
 
-    val capacidade = readInt("Capacidade máxima: ", "Capacidade inválida.", 1..Int.MAX_VALUE)
+    val capacidade = readInt("Capacidade máxima: ", "Capacidade deve ser no mínimo 1.", 1..Int.MAX_VALUE)
     val local = readString("Local (endereço ou link): ", "Local inválido.", 1)
-    val preco = readDouble("Preço do ingresso: ", "Preço inválido.", 0.0)
+    val preco = readDouble("Preço do ingresso: ", "O preço não pode ser negativo.", 0.0)
+
     val estorna = readString("Estorna em caso de cancelamento? (S/N): ", "Resposta inválida.").uppercase() == "S"
-    val taxaEstorno = if (estorna) readDouble("Taxa de estorno (%): ", "Taxa inválida.", 0.0, 100.0) else 0.0
+    val taxaEstorno = if (estorna) readDouble("Taxa de estorno (%): ", "Taxa inválida (0 a 100).", 0.0, 100.0) else 0.0
     val ativo = readString("Evento ativo? (S/N): ", "Resposta inválida.").uppercase() == "S"
 
     val novoEvento = Evento(
@@ -95,6 +88,7 @@ fun cadastrarEvento(usuarioLogado: Usuario) {
     salvarEvento(novoEvento)
     println("Evento '${novoEvento.eventoNome}' cadastrado com sucesso! ID: ${novoEvento.eventoId}")
 }
+
 
 fun alterarEvento(usuarioLogado: Usuario) {
     val meusEventosAtivos = listarEventosPorOrganizador(usuarioLogado.usuarioEmail).filter { it.eventoAtivo }
@@ -120,41 +114,27 @@ fun alterarEvento(usuarioLogado: Usuario) {
 
     val novaDataInicioStr = readString("Nova data/hora de início (atual: ${evento.eventoDataInicio.format(formatarDataHora)}): ", "")
     val novaDataInicio = novaDataInicioStr.takeIf { it.isNotBlank() }?.let {
-        try {
-            LocalDateTime.parse(it, formatarDataHora)
-        } catch (e: Exception) {
-            println("Erro: Data inválida.")
-            null
-        }
+        try { LocalDateTime.parse(it, formatarDataHora) } catch (e: Exception) { println("Erro: Data de início inválida. Mantida a anterior."); null }
     }
 
     val novaDataFimStr = readString("Nova data/hora de fim (atual: ${evento.eventoDataFim.format(formatarDataHora)}): ", "")
     val novaDataFim = novaDataFimStr.takeIf { it.isNotBlank() }?.let {
-        try {
-            LocalDateTime.parse(it, formatarDataHora)
-        } catch (e: Exception) {
-            println("Erro: Data inválida.")
-            null
-        }
+        try { LocalDateTime.parse(it, formatarDataHora) } catch (e: Exception) { println("Erro: Data de fim inválida. Mantida a anterior."); null }
     }
 
     val dataInicioFinal = novaDataInicio ?: evento.eventoDataInicio
     val dataFimFinal = novaDataFim ?: evento.eventoDataFim
 
-    if (dataInicioFinal.isBefore(LocalDateTime.now())) {
-        println("Erro: Data de início não pode ser anterior à data atual.")
+    if (dataInicioFinal.isBefore(LocalDateTime.now()) && novaDataInicio != null) {
+        println("Erro: A nova data de início não pode ser no passado. Alteração de datas cancelada.")
         return
     }
     if (dataFimFinal.isBefore(dataInicioFinal)) {
-        println("Erro: Data de fim não pode ser anterior à data de início.")
-        return
-    }
-    if (dataFimFinal.isBefore(LocalDateTime.now())) {
-        println("Erro: Data de fim não pode ser anterior à data atual.")
+        println("Erro: A data de fim não pode ser anterior à data de início. Alteração de datas cancelada.")
         return
     }
     if (java.time.Duration.between(dataInicioFinal, dataFimFinal).toMinutes() < 30) {
-        println("Erro: O evento deve ter no mínimo 30 minutos de duração.")
+        println("Erro: O evento deve ter no mínimo 30 minutos de duração. Alteração de datas cancelada.")
         return
     }
 
@@ -163,11 +143,7 @@ fun alterarEvento(usuarioLogado: Usuario) {
 
     println("Tipos: ${TipoEvento.entries.joinToString()}")
     readString("Novo tipo (atual: ${evento.eventoTipo}): ", "").takeIf { it.isNotBlank() }?.let {
-        try {
-            evento.eventoTipo = TipoEvento.valueOf(it.uppercase())
-        } catch (e: Exception) {
-            println("Erro: Tipo inválido.")
-        }
+        try { evento.eventoTipo = TipoEvento.valueOf(it.uppercase()) } catch (e: Exception) { println("Erro: Tipo inválido.") }
     }
 
     readString("Novo ID de evento principal (atual: ${evento.eventoIdEventoPrincipal ?: "nenhum"}): ", "").takeIf { it.isNotBlank() }?.let {
@@ -176,21 +152,21 @@ fun alterarEvento(usuarioLogado: Usuario) {
 
     println("Modalidades: ${Modalidade.entries.joinToString()}")
     readString("Nova modalidade (atual: ${evento.eventoModalidade}): ", "").takeIf { it.isNotBlank() }?.let {
-        try {
-            evento.eventoModalidade = Modalidade.valueOf(it.uppercase())
-        } catch (e: Exception) {
-            println("Erro: Modalidade inválida.")
-        }
+        try { evento.eventoModalidade = Modalidade.valueOf(it.uppercase()) } catch (e: Exception) { println("Erro: Modalidade inválida.") }
     }
 
     readString("Nova capacidade máxima (atual: ${evento.eventoCapacidadeMax}): ", "").takeIf { it.isNotBlank() }?.let {
-        evento.eventoCapacidadeMax = it.toInt()
+        val cap = it.toIntOrNull()
+        if (cap != null && cap >= 1) evento.eventoCapacidadeMax = cap
+        else println("Erro: Capacidade inválida. Mantida a anterior.")
     }
 
     readString("Novo local (atual: ${evento.eventoLocal}): ", "").takeIf { it.isNotBlank() }?.let { evento.eventoLocal = it }
 
     readString("Novo preço do ingresso (atual: R${"%.2f".format(evento.eventoPreco)}): ", "").takeIf { it.isNotBlank() }?.let {
-        evento.eventoPreco = it.toDouble()
+        val preco = it.toDoubleOrNull()
+        if (preco != null && preco >= 0.0) evento.eventoPreco = preco
+        else println("Erro: Preço inválido. Mantido o anterior.")
     }
 
     readString("Estorna cancelamento? S/N (atual: ${if (evento.eventoEstorna) "S" else "N"}): ", "").takeIf { it.isNotBlank() }?.let {
@@ -199,7 +175,9 @@ fun alterarEvento(usuarioLogado: Usuario) {
 
     if (evento.eventoEstorna) {
         readString("Nova taxa de estorno % (atual: ${evento.eventoTaxaEstorno}): ", "").takeIf { it.isNotBlank() }?.let {
-            evento.eventoTaxaEstorno = it.toDouble()
+            val taxa = it.toDoubleOrNull()
+            if (taxa != null && taxa in 0.0..100.0) evento.eventoTaxaEstorno = taxa
+            else println("Erro: Taxa inválida. Mantida a anterior.")
         }
     }
 
@@ -244,15 +222,18 @@ fun desativarEvento(usuarioLogado: Usuario) {
         return
     }
 
-    val ingressosDoEvento = listarIngressosPorEvento(evento.eventoId).filter { !"CANCELADO".equals(it.ingressoStatus) }
+    val ingressosDoEvento = listarIngressosPorEvento(evento.eventoId)
+        .filter { it.ingressoStatus != StatusIngresso.CANCELADO }
     ingressosDoEvento.forEach { ingresso ->
-        ingresso.ingressoStatus = "CANCELADO"
+        ingresso.ingressoStatus = StatusIngresso.CANCELADO
         atualizarIngresso(ingresso.ingressoId, ingresso)
         if (evento.eventoEstorna) {
             val valorEstorno = ingresso.ingressoValorPago * (1 - evento.eventoTaxaEstorno / 100)
-            println("Ingresso #${ingresso.ingressoId} cancelado. Estorno de R${"%.2f".format(valorEstorno)} para ${ingresso.ingressoUsuarioEmail}")
+
+            println("Ingresso #${ingresso.ingressoId} cancelado. " +
+                    "Estorno de R${"%.2f".format(valorEstorno)} para ${ingresso.ingressoUsuarioEmail}")
         } else {
-            println("Ingresso #${ingresso.ingressoId} cancelado sem estorno.")
+            println("Ingresso #${ingresso.ingressoId} cancelado para ${ingresso.ingressoUsuarioEmail} (Sem estorno conforme regra do evento).")
         }
     }
 
