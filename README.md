@@ -25,6 +25,6 @@
 
 #### Integrantes:
 - ##### Joalisson Maia
-- ##### Jadson Sobrinho
-- ##### Mateus Queiroz
-- ##### Murilo Marinho
+- ##### Rafael Jesus
+- ##### Levi Ferreira
+- ##### Rafael Santos
