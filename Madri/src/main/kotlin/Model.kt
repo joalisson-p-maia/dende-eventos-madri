@@ -5,6 +5,10 @@ enum class TipoUsuario { COMUM, ORGANIZADOR }
 
 enum class Modalidade { PRESENCIAL, REMOTO, HIBRIDO }
 
+enum class SEXO { MASCULINO, FEMININO, OUTROS }
+
+enum class StatusIngresso { ATIVO, CANCELADO }
+
 enum class TipoEvento {
     SOCIAL,
     CORPORATIVO,
@@ -34,7 +38,7 @@ data class Usuario(
     val usuarioEmail: String,
     var usuarioNome: String,
     var usuarioDataNascimento: LocalDate,
-    var usuarioSexo: String,
+    var usuarioSexo: SEXO,
     var usuarioSenha: String,
     var usuarioTipo: TipoUsuario,
     var usuarioAtivo: Boolean = true,
@@ -67,6 +71,6 @@ data class Ingresso(
     val ingressoId: Int,
     val ingressoEventoId: Int,
     val ingressoUsuarioEmail: String,
-    var ingressoStatus: String = "ATIVO",
+    var ingressoStatus: StatusIngresso = StatusIngresso.ATIVO,
     val ingressoValorPago: Double
 )
