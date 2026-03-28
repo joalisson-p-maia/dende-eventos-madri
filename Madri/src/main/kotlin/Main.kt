@@ -4,7 +4,7 @@ fun main() {
     System.setOut(PrintStream(System.`out`, true, "UTF-8"))
 
     var usuarioLogado: Usuario? = null
-    var menuContinuaAberto = true
+    var opcao: String = ""
 
     do {
         if (usuarioLogado == null) {
@@ -13,25 +13,31 @@ fun main() {
             println("1. Login / Reativar \n2. Cadastro Comum \n3. Cadastro Org \n0. Sair")
             println("====================")
             print("Opção: ")
-            val opcao = readln()
-            if (opcao == "0") menuContinuaAberto = false
-            else when (opcao) {
+            opcao = readln()
+
+            when (opcao) {
                 "1" -> usuarioLogado = reativarUsuario()
                 "2" -> cadastrarUsuarioComum()
                 "3" -> cadastrarUsuarioOrganizador()
+                "0" -> print("--- ENCERRANDO SISTEMA ---")
                 else -> println("Opção inválida.")
             }
+
         } else {
             println("\n--- MENU (${usuarioLogado.usuarioNome}) ---")
             println("====================")
             println("1. Perfil \n2. Alterar Perfil \n3. Inativar \n0. Logout")
 
-            if (usuarioLogado.usuarioTipo == TipoUsuario.ORGANIZADOR) {
-                println("4. Cadastrar Evento \n5. Listar Meus Eventos \n6. Alterar Evento \n7. Ativar Evento \n8. Desativar Evento")
-                println("====================")
-            } else {
-                println("4. Feed de Eventos \n5. Comprar Ingresso \n6. Listar Meus Ingressos \n7. Cancelar Ingresso")
-                println("====================")
+            when (usuarioLogado.usuarioTipo == TipoUsuario.ORGANIZADOR) {
+                true -> {
+                    println("4. Cadastrar Evento \n5. Listar Meus Eventos \n6. Alterar Evento \n7. Ativar Evento \n8. Desativar Evento")
+                    println("====================")
+                }
+
+                false -> {
+                    println("4. Feed de Eventos \n5. Comprar Ingresso \n6. Listar Meus Ingressos \n7. Cancelar Ingresso")
+                    println("====================")
+                }
             }
 
             print("Opção: ")
@@ -51,5 +57,5 @@ fun main() {
                 else -> println("Opção inválida.")
             }
         }
-    } while (menuContinuaAberto)
+    } while (opcao != "0")
 }
