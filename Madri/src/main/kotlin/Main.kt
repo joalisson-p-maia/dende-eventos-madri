@@ -6,9 +6,9 @@ import java.time.format.DateTimeFormatter
 import kotlin.String
 
 //data class e enums
-enum class TipoUsuario { COMUM, ORGANIZADOR }
+enum class TipoUsuario { COMUM, ORGANIZADOR } // boa estratégia de enum para diferenciar tipos de usuários mapear
 enum class Modalidade { PRESENCIAL, REMOTO, HIBRIDO }
-enum class TipoEvento {
+enum class TipoEvento { // a gente tem muito mais tipos de eventos
     SOCIAL,
     CORPORATIVO,
     ACADEMICO,
@@ -16,21 +16,31 @@ enum class TipoEvento {
     FESTIVAL,
     OUTROS
 }
+// talvez fosse legal fazer um enum para o status do ingresso também, para evitar que o usuário digite algo diferente
+// de "ATIVO" ou "CANCELADO", por exemplo, o que poderia causar um erro na hora de verificar a disponibilidade
+// do evento ou na hora de cancelar o ingresso
+
 
 //data class, permitem usar toString, hashcode, equals, por debaixo dos panos, servem para armazenar dados
 data class Usuario(
-    val usuarioEmail: String,
-    var usuarioNome: String,
+    //email
+    val usuarioEmail: String, // todos esses campos são do usuário, não faz sentido replicar o nome usuário
+    var usuarioNome: String, // nome
     var usuarioDataNascimento: LocalDate,
     var usuarioSexo: String,
     var usuarioSenha: String,
     var usuarioTipo: TipoUsuario,
     var usuarioAtivo: Boolean = true,
-    var usuarioCnpj: String? = null,
+    var usuarioCnpj: String? = null,// se vocês achassem legal, vocês poderia ter criado um data class Empresa para armazenar os dados da empresa, e aí o usuário organizador teria um campo do tipo Empresa,
+    // ao invés de ter esses campos soltos dentro do usuário, o que deixaria o código mais organizado
+    // aqui teria um campo do tipo Empresa? chamado empresa, e aí dentro do cadastro do organizador,
+    // se ele informar que tem empresa, você cria um objeto Empresa com os dados e atribui para esse campo, ao invés de ter esses campos soltos dentro do usuário
     var usuarioRazaoSocial: String? = null,
     var usuarioNomeFantasia: String? = null
 )
 
+// a mesma coisa aqui, todos os campos tem a palavra evento, não faz sentido repetir isso,
+// o nome da classe já deixa claro que são dados do evento, então podemos simplificar os nomes dos campos
 data class Evento(
     val eventoId: Int,
     var eventoNome: String,
@@ -39,22 +49,23 @@ data class Evento(
     var eventoDataInicio: LocalDateTime,
     var eventoDataFim: LocalDateTime,
     var eventoTipo: TipoEvento,
-    var eventoModalidade: Enum<*>,
+    var eventoModalidade: Enum<*>,// aqui era para ser do tipo Modalidade
     var eventoLocal: String,
     var eventoPreco: Double,
     var eventoCapacidadeMax: Int,
     var eventoIngressosVendidos: Int = 0,
     var eventoAtivo: Boolean = false,
-    var eventoOrganizadorEmail: String,
-    var eventoIdEventoPrincipal: Int? = null,
+    var eventoOrganizadorEmail: String, // aqui era para ser um Usuario, pois o evento tem um usuário organizador
+    var eventoIdEventoPrincipal: Int? = null, // aqui era para ser do tipo Evento?, pois o evento pode ter um evento principal vinculado
     var eventoEstorna: Boolean = true,
     var eventoTaxaEstorno: Double = 0.0
 )
 
+// mesmo caso dos outros, todos os campos tem a palavra ingresso, não faz sentido repetir isso
 data class Ingresso(
     val ingressoId: Int,
-    val ingressoEventoId: Int,
-    val ingressoUsuarioEmail: String,
+    val ingressoEventoId: Int,// aqui era para ser do tipo Evento, pois o ingresso tem um evento vinculado
+    val ingressoUsuarioEmail: String, // aqui era para ser do tipo Usuario, pois o ingresso tem um usuário comprador
     var ingressoStatus: String = "ATIVO",
     val ingressoValorPago: Double
 )
@@ -74,6 +85,10 @@ fun main() {
 
     var menuContinuaAberto = true
 
+    // isso não é uma boa prática de programação, pois você está fazendo loop infinito
+    // qual a diferença de usar isso ou um while(true)?
+    // o ideal seria o laço ser controlado pela condição de saída (opcoesMenu == "0") e não por uma variável booleana
+    // que pode ser esquecida de atualizar, ou seja, o risco de criar um loop infinito acidentalmente é maior
     while (menuContinuaAberto) {
         if (usuarioLogado == null) {
             println("\n--- DENDÊ EVENTOS ---")
@@ -89,9 +104,17 @@ fun main() {
                     print("Senha: "); val senhaRespostaMenu = readln()
 
                     val usuarioLista = usuariosListaMutavel.find { it.usuarioEmail == emailRespostaMenu && it.usuarioSenha == senhaRespostaMenu }
+
+                    // isso poderia ser reescrito para:
+                    // if (usuarioLista?.usuarioAtivo == false) {
+                    //     println("Conta inativa. Reativar? (S/N): ")
+                    // o operador ?. já verifica se usuarioLista é nulo antes de acessar a propriedade usuarioAtivo,
+                    // evitando a necessidade de um if separado para verificar se usuarioLista é nulo
                     if (usuarioLista != null) {
                         if (!usuarioLista.usuarioAtivo) {
                             print("Conta inativa. Reativar? (S/N): ")
+                            //o operador uppercase() é uma boa prática para garantir que a comparação seja case-insensitive,
+                            // ou seja, tanto "s" quanto "S" serão aceitos para reativar a conta
                             if (readln().uppercase() == "S") {
                                 usuarioLista.usuarioAtivo = true
                                 usuarioLogado = usuarioLista
@@ -109,15 +132,32 @@ fun main() {
                     val emailRespostaMenu = readln()
 
                     //Ele verifica em qualquer usuário se tem o email que vem do menu
+                    // boa, bom uso do any para verificar se já existe um email cadastrado, evitando a necessidade de criar uma variável booleana ou um loop para fazer essa verificação manualmente
                     if (usuariosListaMutavel.any { it.usuarioEmail == emailRespostaMenu }) println("Erro: Email já cadastrado.")
                     else {
                         print("Digite seu Nome: ")
                         val nomeRespostaMenu = readln()
 
+                        // aqui talvez fosse legal usar o do while para continuar pedindo a data de nascimento até que
+                        // o usuário digite uma data válida, ao invés de cancelar o cadastro na primeira tentativa
+                        // tipo:
+                        // var dataNascimentoFormatada: LocalDate? = null
+                        // do {
+                        //     print("Digite sua Data de Nascimento no formato (ddMMyyyy): ")
+                        //     val dataNascimentoRespostaMenu = readln()
+                        //     if (dataNascimentoRespostaMenu.length == 8) {
+                        //         try {
+                        //             dataNascimentoFormatada = LocalDate.parse(dataNascimentoRespostaMenu, DateTimeFormatter.ofPattern("ddMMyyyy"))
+                        //         } catch (e: Exception) {
+                        //             println("Erro: Data inválida. Tente novamente.")
+                        //         }
+                        //     } else {
+                        //         println("Erro: Use o formato de 8 dígitos (Ex: 06102003). Tente novamente.")
+                        //     }
+                        // } while (dataNascimentoFormatada == null)
                         print("Digite sua Data de Nascimento no formato (ddMMyyyy): ")
                         val dataNascimentoRespostaMenu = readln()
                         var dataNascimentoFormatada: LocalDate? = null
-
                         if (dataNascimentoRespostaMenu.length == 8) {
                             try {
                                 // Converte o texto "06102003" em um objeto de data real
@@ -130,6 +170,7 @@ fun main() {
                             println("Erro: Use o formato de 8 dígitos (Ex: 06102003).")
                         }
 
+
                         if (dataNascimentoFormatada != null) {
                             print("Digite seu Sexo: ")
                             val sexoRespostaMenu = readln()
@@ -137,7 +178,14 @@ fun main() {
                             print("Digite sua Senha: ")
                             val senhaRespostaMenu = readln()
 
+                            // não tem um confirmar senhar?
+                            // seria interessante adicionar um campo para confirmar a senha,
+                            // garantindo que o usuário não cometa um erro de digitação e acabe criando uma conta com
+                            // uma senha diferente da que ele pretendia
+
+                            // acho que isso poderia ficar no início do cadastro, antes de pedir os outros dados
                             val tipoRespostaMenu = if (opcoesMenu == "3") TipoUsuario.ORGANIZADOR else TipoUsuario.COMUM
+
                             val novoUsuario = Usuario(
                                 emailRespostaMenu,
                                 nomeRespostaMenu,
@@ -146,18 +194,29 @@ fun main() {
                                 senhaRespostaMenu,
                                 tipoRespostaMenu
                             )
+
                             if (tipoRespostaMenu == TipoUsuario.ORGANIZADOR) {
                                 print("Informar empresa? (S/N): ")
+
+                                // se informar qualquer outra coisa que não seja "S", ele vai entender
+                                // que é um "N" e não vai pedir os dados da empresa, talvez fosse interessante validar
+                                // a resposta para aceitar apenas "S" ou "N", evitando confusões
                                 if (readln().uppercase() == "S") {
                                     print("CNPJ: ")
-                                    novoUsuario.usuarioCnpj = readln()
+                                    novoUsuario.usuarioCnpj = readln() //não valida se tá vazio, formato, só pega o que o usuário digitar
+                                    // você poderia ter usado o takeIf aqui também, para evitar a necessidade de um if separado
+                                    // para verificar se o usuário digitou algo ou não, deixando o código mais limpo e direto
+                                    // e validando o campo para não aceitar um CNPJ vazio, por exemplo:
+                                    // readln().takeIf { it.isNotBlank() &&  it.length == 14 }?.let { novoUsuario.usuarioCnpj = it }
                                     print("Razão Social: ")
-                                    novoUsuario.usuarioRazaoSocial = readln()
+                                    novoUsuario.usuarioRazaoSocial = readln() //não valida se tá vazio, formato, só pega o que o usuário digitar
                                     print("Nome Fantasia: ")
-                                    novoUsuario.usuarioNomeFantasia = readln()
+                                    novoUsuario.usuarioNomeFantasia = readln() //não valida se tá vazio, formato, só pega o que o usuário digitar
                                 }
+
                             }
-                            usuariosListaMutavel.add(novoUsuario); println("Cadastrado com sucesso!")
+                            usuariosListaMutavel.add(novoUsuario);
+                            println("Cadastrado com sucesso!")
                         }else{
                             println("Cadastro cancelado por erro na data")
                         }
@@ -169,6 +228,10 @@ fun main() {
             println("\n--- MENU (${usuarioLogado.usuarioNome}) ---")
             println("1. Perfil \n2. Alterar Perfil \n3. Inativar \n0. Logout")
 
+            // eu acho que aqui você poderia ter dividido tudo:
+                // tudo que é de Organizador fica dentro desse if
+                // tudo que é do Usuário Comum fica dentro do else, e aí cada um tem seu próprio menu,
+                // ao invés de misturar as opções e ficar verificando o tipo do usuário a cada opção
             if (usuarioLogado.usuarioTipo == TipoUsuario.ORGANIZADOR) {
                 println("4. Criar Evento \n5. Listar Meus Eventos \n6. Alterar Evento \n7. Ativar/Desativar ")
             } else {
@@ -180,9 +243,14 @@ fun main() {
                 "0" -> usuarioLogado = null
                 "1" -> {
                     //VISUALIZAR PERFIL
+                    // boa, pegando o período fica mais fácil de colocar a data no padrão desejado
+                    // o nome poderia ser:
+                    // val idadeUsuario = Period.between(usuarioLogado.usuarioDataNascimento, LocalDate.now())
                     val verificaIdadeAtualUsuario = Period.between(usuarioLogado.usuarioDataNascimento, LocalDate.now())
                     println("Nome: ${usuarioLogado.usuarioNome} | Email: ${usuarioLogado.usuarioEmail}")
-                    println("Idade: ${verificaIdadeAtualUsuario.years} anos, ${verificaIdadeAtualUsuario.months} meses, ${verificaIdadeAtualUsuario.days} dias")
+                    println("Idade: ${verificaIdadeAtualUsuario.years} anos, ${verificaIdadeAtualUsuario.months} meses e ${verificaIdadeAtualUsuario.days} dias")
+                    // se tudo ficasse dentro do if de organizador e do else de usuário comum, não precisaria ficar verificando
+                    // o tipo do usuário a cada opção, o que deixaria o código mais limpo e fácil de entender
                     usuarioLogado.usuarioCnpj?.let {
                         println("Empresa: $it - ${usuarioLogado.usuarioNomeFantasia}")
                     }
@@ -193,12 +261,21 @@ fun main() {
                     println("Deixe em branco para não alterar.")
 
                     print("Novo nome (atual: ${usuarioLogado.usuarioNome}): ")
+                    //bom uso do takeIf para evitar a necessidade de um if separado para verificar
+                    // se o usuário digitou algo ou não, deixando o código mais limpo e direto
+                    // era bom verificar se o nome tem um tamanho mínimo, por exemplo, para evitar que o usuário deixe
+                    // o nome vazio ou com apenas um caractere, o que não seria muito útil para identificar a pessoa
                     readln().takeIf { it.isNotBlank() }?.let { usuarioLogado.usuarioNome = it }
 
                     print("Nova senha: ")
                     readln().takeIf { it.isNotBlank() }?.let { usuarioLogado.usuarioSenha = it }
 
+                    // era bom quando pedir a senha, sempre pedir a confirmação da senha, para evitar que o usuário
+                    // cometa um erro de digitação e acabe alterando a senha para algo diferente do que ele pretendia
+
                     print("Novo sexo (atual: ${usuarioLogado.usuarioSexo}): ")
+                    // talvez fosse legal verificar se o usuário digitou um sexo válido, por exemplo, "Masculino",
+                    // "Feminino", "Outro", etc, para evitar que ele digite algo que não faça sentido
                     readln().takeIf { it.isNotBlank() }?.let { usuarioLogado.usuarioSexo = it }
 
                     print("Nova Data de Nascimento no formato (DD/MM/YYYY) (atual: ${usuarioLogado.usuarioDataNascimento.format(formatarData)}): ")
@@ -206,12 +283,17 @@ fun main() {
                         try {
                             usuarioLogado.usuarioDataNascimento = LocalDate.parse(it, formatarData)
                         } catch (e: Exception) {
+                            // boa solução
+                            // mas acho que um do while nas leituras sempre é legal
                             println("Erro: Data inválida. Mantida a data anterior.")
                         }
                     }
 
+                    // reforço minha ponderação sobre colocar tudo do organizador dentro de um if e tudo do usuário comum dentro de um else, para evitar
+                    // a necessidade de ficar verificando o tipo do usuário a cada opção, o que deixaria o código mais limpo e fácil de entender
                     if (usuarioLogado.usuarioTipo == TipoUsuario.ORGANIZADOR) {
                         print("Novo Nome Fantasia (atual: ${usuarioLogado.usuarioNomeFantasia ?: "não informado"}): ")
+                        // era bom validar uma quantidade mínima de caracteres
                         readln().takeIf { it.isNotBlank() }?.let { usuarioLogado.usuarioNomeFantasia = it }
                     }
 
@@ -220,13 +302,18 @@ fun main() {
 
                 "3" -> {
                     //INATIVAR
+
                     val temEventoAtivo = eventosListaMutavel.any {
+                        // aqui deveria ser:
+                        // it.organizador.email == usuarioLogado.email && it.ativo && it.dataFim.isAfter(LocalDateTime.now())
                         it.eventoOrganizadorEmail == usuarioLogado.usuarioEmail && it.eventoAtivo && it.eventoDataFim.isAfter(
                             LocalDateTime.now()
                         )
                     }
-                    if (usuarioLogado.usuarioTipo == TipoUsuario.ORGANIZADOR && temEventoAtivo) println("Erro: Você possui eventos ativos.")
-                    else {
+                    // de novo outro if repetitivo para definir o que é organizador ou usuário comum
+                    if (usuarioLogado.usuarioTipo == TipoUsuario.ORGANIZADOR && temEventoAtivo) {
+                        println("Erro: Você possui eventos ativos.")
+                    } else {
                         usuarioLogado.usuarioAtivo = false
                         usuarioLogado = null
                         println("Conta inativada.")
@@ -234,12 +321,18 @@ fun main() {
                 }
 
                 "4" -> {
+
+                    // outra vez if repetitivo para definir o que é organizador ou usuário comum,
+                    // reforçando a ideia de colocar tudo do organizador dentro de um if e tudo do usuário comum dentro
+                    // de um else, para evitar a necessidade de ficar verificando o tipo do usuário a cada opção,
+                    // o que deixaria o código mais limpo e fácil de entender
                     if (usuarioLogado.usuarioTipo == TipoUsuario.ORGANIZADOR) {
                         //CRIAR EVENTO
                         val formatarDataHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 
                         print("Página do evento: ")
-                        val paginaEvento = readln()
+                        val paginaEvento = readln() // legal se tivesse o takeIf aqui para validar
+                        // se o usuário digitou algo ou não, evitando criar um evento com a página vazia, por exemplo
 
                         print("Nome do evento: ")
                         val nomeEvento = readln()
@@ -250,35 +343,58 @@ fun main() {
                         print("Data e hora de início (DD/MM/YYYY HH:mm): ")
                         val dataInicioEvento = LocalDateTime.parse(readln(), formatarDataHora)
 
+                        // boa, validação boa
                         if (dataInicioEvento.isBefore(LocalDateTime.now())) {
                             println("Erro: A data de início não pode ser anterior à data atual.")
                         } else {
                             print("Data e hora de fim (DD/MM/YYYY HH:mm): ")
                             val dataFimEvento = LocalDateTime.parse(readln(), formatarDataHora)
 
+                            // boa, um when sem argumento para definir as regras de validação da data de fim,
+                            // deixando o código mais organizado e fácil de entender
                             when {
+                                // boa
                                 dataFimEvento.isBefore(LocalDateTime.now()) ->
                                     println("Erro: A data de fim não pode ser anterior à data atual.")
+                                // boa
                                 dataFimEvento.isBefore(dataInicioEvento) ->
                                     println("Erro: A data de fim não pode ser anterior à data de início.")
+                                // booooa, muito bom, você poderia usar o period também
+                                // Period.between(dataInicioEvento.toLocalDate(), dataFimEvento.toLocalDate()).minutes < 30
                                 java.time.Duration.between(dataInicioEvento, dataFimEvento).toMinutes() < 30 ->
                                     println("Erro: O evento deve ter no mínimo 30 minutos de duração.")
                                 else -> {
                                     println("Tipos de evento disponíveis: ${TipoEvento.entries.joinToString()}")
                                     print("Tipo do evento: ")
+                                    // aqui seria bom validar se o usuário digitou um tipo de evento válido,
+                                    // para evitar que ele digite algo que não faça sentido e cause um erro na hora de criar o evento
                                     val tipoEvento = TipoEvento.valueOf(readln().uppercase())
 
                                     print("ID do evento principal (deixe em branco se não houver): ")
                                     val eventoPrincipalId = readln().takeIf { it.isNotBlank() }?.toIntOrNull()
+
+                                    // aqui você poderia fazer assim:
+                                    /*
+                                    val eventoPrincipal = readln().takeIf { it.isNotBlank() }?.toIntOrNull()?.let { id ->
+                                        eventosListaMutavel.find { it.eventoId == id } ?: run {
+                                            println("Erro: Evento principal não encontrado.")
+                                            null
+                                        }
+                                    }**/
 
                                     if (eventoPrincipalId != null && eventosListaMutavel.none { it.eventoId == eventoPrincipalId }) {
                                         println("Erro: Evento principal não encontrado.")
                                     } else {
                                         println("Modalidades: ${Modalidade.entries.joinToString()}")
                                         print("Modalidade: ")
+                                        // sempre bom usar o takeIf e o let para validar a entrada do usuário, evitando a necessidade de
+                                        // ifs separados para verificar se ele digitou algo ou não, e se o valor é válido ou não,
+                                        // deixando o código mais limpo e direto
+                                        // val modalidade = readln().takeIf { it.isNotBlank() }?.let { Modalidade.valueOf(it.uppercase()) }
                                         val modalidadeEvento = Modalidade.valueOf(readln().uppercase())
 
                                         print("Capacidade máxima: ")
+                                        // sempre usar o takeIf
                                         val capacidadeEvento = readln().toInt()
 
                                         print("Local (endereço ou link): ")
@@ -328,15 +444,26 @@ fun main() {
                         //FEED DE EVENTOS
                         val dataAtual = LocalDateTime.now()
 
+                        // muito boa a manipulação das collections
                         val feed = eventosListaMutavel
                             .filter { evento ->
                                 evento.eventoAtivo &&
                                         evento.eventoDataFim.isAfter(dataAtual) &&
                                         ingressosListaMutavel.count {
+                                            // it.evento = evento
                                             it.ingressoEventoId == evento.eventoId && !"CANCELADO".equals(it.ingressoStatus)
                                         } < evento.eventoCapacidadeMax
                             }
                             .sortedWith(compareBy({ it.eventoDataInicio }, { it.eventoNome }))
+
+                        // o que se segue aqui deve seguir as seguintes orientações:
+                        // 1. O if de organizador e usuário comum deve ficar no início do menu,
+                        // para evitar a necessidade de ficar verificando o tipo do usuário a cada opção, deixando o código mais limpo e fácil de entender
+                        // 2. O takeIf e let são úteis para a maioria das leituras (você pode explorar isso em conjunto com o do..while)
+                        // 3. As sugestões de alteração nos data classes impactam diretamente na escrita dos filtros nas collections
+                        // 4. Cuidado com o casos de else que não dão possibilidade do usuário retentar
+                        // 5. sempre dê preferência ao when sem argumento para organizar as regras de validação, deixando o código mais limpo e fácil de entender
+
 
                         if (feed.isEmpty()) {
                             println("Nenhum evento disponível no momento.")
